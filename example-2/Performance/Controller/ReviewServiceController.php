@@ -1,5 +1,9 @@
 <?php
 
+use Performance\Service\Contract\PerformanceReviewServiceInterface;
+use Performance\Service\Mock\PerformanceReviewServiceMock;
+use Performance\Service\Request\PerformanceReviewAnswersRequest;
+
 class ReviewServiceController {
 	/**
 	 *
@@ -32,8 +36,13 @@ class ReviewServiceController {
 	}
 
 	public function post() {
+		//do form validation, what does that mean?
 		try {
-			$reviewAnswers = new ReviewAnswersRequest($this->reviewId, $_POST['questions']);
+			//This line is perhaps the one I'm least confident in.
+			//We need this object. I'm not sure exactly the best way to build it, and how
+			//much validation happens when you build it. In the end, it just needs to
+			//implement the right interface for the operation we're performing later.
+			$reviewAnswers = new PerformanceReviewAnswersRequest($this->reviewId, $_POST['questions']);
 		} catch (InvalidArgumentException $exception) {
 			//invalid data posted.
 			Session::message("I'm sorry, you did it wrong.");
@@ -48,5 +57,5 @@ class ReviewServiceController {
 
 }
 
-$controller = new ReviewController(new PerformanceReviewService($db));
+$controller = new ReviewController(new PerformanceReviewServiceMock());
 $controller->dispatch();

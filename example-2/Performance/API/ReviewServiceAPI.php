@@ -16,30 +16,31 @@ class ReviewServiceApi {
 		$this->service = $service;
 	}
 	
-	public function getReview(DB $db, APIRequest $request) {
-		$this->vars->review = $this->getPerformanceReviewService()->buildPerformanceReview($this->reviewId);
-		$this->vars->questions = $this->getPerformanceReviewService()->buildReviewQuestions($this->reviewId);
-		$this->vars->answers = $this->getPerformanceReviewService()->buildReviewAnswers($this->reviewId);
+	public function getReview(APIRequest $request, APIResponse $response) {
+		$vars->review = $this->getPerformanceReviewService()->buildPerformanceReview($this->reviewId);
+		$vars->questions = $this->getPerformanceReviewService()->buildReviewQuestions($this->reviewId);
+		$vars->answers = $this->getPerformanceReviewService()->buildReviewAnswers($this->reviewId);
 		echo json_encode($this->vars);
 	}
 	
-	public function updateReview(DB $db, APIRequest $request, APIResponse $response) {
+	public function updateReview(APIRequest $request, APIResponse $response) {
 		$reviewId = $request->get('id');
 		try {
+			//The API could use a different Request object, as long as it implements the right
+			//interface.
 			$reviewAnswers = new ReviewAnswersRequest($reviewId, $request->post('questions'));
 		} catch (InvalidArgumentException $exception) {
 			//invalid data posted.
-			Session::message("I'm sorry, you did it wrong.");
-			$this->redirect("review.php?id=" . $reviewId);
+			$response->errorCode(400);
+			$response->errorMessage('You did it wrong!');
+			return true;
 		}
 		$this->getPerformanceReviewService()->answerReviewQuestions($reviewAnswers);
-		if ($_POST['action'] == 'submit') {
-			$this->getPerformanceReviewService()->submitPerformanceReview($reviewId, new DateTime(null, new DateTimeZone('UTC')));
-		}
-		$this->redirect("review.php?id=" . $reviewId);
+		$response->successCode(200);
+		return true;
 	}
 }
 
 IoC::bind('DB', $db);
 $api = IoC::make(ReviewServiceApi::class);
-$api->getReview($db, $request);
+$api->getReview($request, $response);
